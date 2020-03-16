@@ -1,9 +1,8 @@
 package tools.descartes.teastore.registryclient.tracing;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.client.Invocation;
@@ -15,12 +14,12 @@ import io.jaegertracing.internal.samplers.ConstSampler;
 import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
-import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.tag.Tags;
 import io.opentracing.util.GlobalTracer;
+
 
 /**
  * Utility functions for OpenTracing integration.
@@ -31,6 +30,25 @@ public final class Tracing {
   private Tracing() {
   }
 
+  static Properties loadConfig() throws IOException {
+    String file = "tracer_config.properties";
+    FileInputStream fs = new FileInputStream(file);
+    Properties config = new Properties();
+    config.load(fs);
+    return config;
+  }
+
+  public static io.opentracing.Tracer init2(String service) throws IOException {
+    Properties config = loadConfig();
+    String tracerName = config.getProperty("tracer");
+    if ("jaeger".equals(tracerName)) {
+
+    } else if ("zipkin".equals(tracerName)){
+      Reporter<Span> reporter = AsyncReporter.builder(sender).build();
+    }
+    return
+  }
+
   /**
    * This function is used to create an Tracer instance to be used as the
    * GlobalTracer.
@@ -38,7 +56,7 @@ public final class Tracing {
    * @param service is usually the name of the service
    * @return Tracer intended to be used as GlobalTracer
    */
-  public static Tracer init(String service) {
+  public static io.opentracing.Tracer init(String service) {
     return new JaegerTracer.Builder(service).withSampler(new ConstSampler(true)).withZipkinSharedRpcSpan()
         .registerInjector(Format.Builtin.HTTP_HEADERS, new B3TextMapCodec.Builder().build())
         .registerExtractor(Format.Builtin.HTTP_HEADERS, new B3TextMapCodec.Builder().build()).build();
@@ -101,7 +119,7 @@ public final class Tracing {
    *         with try-with-resource construct
    */
   private static Scope buildSpanFromHeaders(Map<String, String> headers) {
-    Tracer.SpanBuilder spanBuilder = GlobalTracer.get().buildSpan("op");
+    io.opentracing.Tracer.SpanBuilder spanBuilder = GlobalTracer.get().buildSpan("op");
     try {
       SpanContext parentSpanCtx = GlobalTracer.get().extract(Format.Builtin.HTTP_HEADERS,
           new TextMapExtractAdapter(headers));

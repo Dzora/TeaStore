@@ -22,11 +22,6 @@
 			<version>1.14</version>
 		</dependency>
 		<dependency>
-			<groupId>io.jaegertracing</groupId>
-			<artifactId>jaeger-client</artifactId>
-			<version>0.32.0</version>
-		</dependency>
-		<dependency>
 			<groupId>org.glassfish.jersey.containers</groupId>
 			<artifactId>jersey-container-servlet</artifactId>
 			<version>2.25.1</version>
@@ -45,6 +40,22 @@
 			<groupId>org.glassfish.jersey.connectors</groupId>
 			<artifactId>jersey-grizzly-connector</artifactId>
 			<version>2.25.1</version>
+		</dependency>
+		<!-- OpenTracing tracing implementations -->
+		<dependency>
+			<groupId>io.jaegertracing</groupId>
+			<artifactId>jaeger-client</artifactId>
+			<version>0.32.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.opentracing.brave</groupId>
+			<artifactId>brave-opentracing</artifactId>
+			<version>0.35.1</version>
+		</dependency>
+		<dependency>
+			<groupId>io.zipkin.reporter2</groupId>
+			<artifactId>zipkin-reporter</artifactId>
+			<version>2.12.1</version>
 		</dependency>
 		<!-- WebApp Dependencies -->
 		<!-- jackson, slf4j, and rx must be included before ribbon to avoid version
