@@ -17,6 +17,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
+import io.opentracing.contrib.web.servlet.filter.TracingFilter;
 import io.opentracing.util.GlobalTracer;
 import tools.descartes.teastore.registryclient.RegistryClient;
 import tools.descartes.teastore.registryclient.Service;
@@ -51,6 +52,7 @@ public class WebuiStartup implements ServletContextListener {
      */
     public void contextInitialized(ServletContextEvent event) {
         GlobalTracer.register(Tracing.init(Service.WEBUI.getServiceName()));
+		TracingFilter filter =  new TracingFilter(GlobalTracer.get());
     	ServiceLoadBalancer.preInitializeServiceLoadBalancers(Service.AUTH, Service.IMAGE,
     			Service.PERSISTENCE, Service.RECOMMENDER);
     	RegistryClient.getClient().register(event.getServletContext().getContextPath());
