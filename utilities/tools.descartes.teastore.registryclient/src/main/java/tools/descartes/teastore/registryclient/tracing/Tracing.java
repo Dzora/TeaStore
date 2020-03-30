@@ -94,6 +94,7 @@ public final class Tracing {
     ReporterConfiguration reporterConfig = ReporterConfiguration.fromEnv().withLogSpans(true).withSender(senderConfig);
     Configuration config = new Configuration(service).withSampler(sampleConfig).withReporter(reporterConfig);
 
+
     return config.getTracer();
   }
 
@@ -137,7 +138,7 @@ public final class Tracing {
     Span activeSpan = GlobalTracer.get().activeSpan();
     if (activeSpan != null) {
       GlobalTracer.get().inject(activeSpan.context(), Format.Builtin.HTTP_HEADERS,
-          Tracing.requestBuilderCarrier(requestBuilder));
+              Tracing.requestBuilderCarrier(requestBuilder));
     }
   }
 
@@ -152,10 +153,15 @@ public final class Tracing {
    */
   public static Scope extractCurrentSpan(HttpServletRequest request) {
     Map<String, String> headers = new HashMap<>();
+    String path = request.getRequestURL().toString();
+    String name = path.substring(path.lastIndexOf('/') +1 );
+    if(name.contains("?")) {
+      name = name.substring(0,name.indexOf('?'));
+    }
     for (String headerName : Collections.list(request.getHeaderNames())) {
       headers.put(headerName, request.getHeader(headerName));
     }
-    return buildSpanFromHeaders(headers);
+    return buildSpanFromHeaders(headers,name);
   }
 
   /**
@@ -172,7 +178,7 @@ public final class Tracing {
     for (String headerName : httpHeaders.getRequestHeaders().keySet()) {
       headers.put(headerName, httpHeaders.getRequestHeader(headerName).get(0));
     }
-    return buildSpanFromHeaders(headers);
+    return buildSpanFromHeaders(headers,"");
   }
 
   /**
@@ -183,8 +189,11 @@ public final class Tracing {
    * @return Scope containing the extracted span marked as active. Can be used
    *         with try-with-resource construct
    */
-  private static Scope buildSpanFromHeaders(Map<String, String> headers) {
-    io.opentracing.Tracer.SpanBuilder spanBuilder = GlobalTracer.get().buildSpan("op");
+  private static Scope buildSpanFromHeaders(Map<String, String> headers,String name) {
+    if(name.equals("")) {
+      name = "op";
+    }
+    io.opentracing.Tracer.SpanBuilder spanBuilder = GlobalTracer.get().buildSpan(name);
 
     try {
       SpanContext parentSpanCtx = GlobalTracer.get().extract(Format.Builtin.HTTP_HEADERS,

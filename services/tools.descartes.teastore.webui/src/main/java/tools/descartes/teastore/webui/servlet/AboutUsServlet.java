@@ -24,8 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 
-import io.opentracing.Span;
-import io.opentracing.util.GlobalTracer;
 import tools.descartes.teastore.registryclient.loadbalancers.LoadBalancerTimeoutException;
 import tools.descartes.teastore.registryclient.rest.LoadBalancedImageOperations;
 import tools.descartes.teastore.registryclient.rest.LoadBalancedStoreOperations;
@@ -53,8 +51,6 @@ public class AboutUsServlet extends AbstractUIServlet {
   @Override
   protected void handleGETRequest(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException, LoadBalancerTimeoutException {
-    Span orderSpan = GlobalTracer.get().buildSpan("order_span").start();
-    request.setAttribute("span",orderSpan);
     checkforCookie(request, response);
     HashMap<String, String> portraits = LoadBalancedImageOperations
         .getWebImages(Arrays.asList("andreBauer", "johannesGrohmann", "joakimKistowski",
@@ -73,7 +69,6 @@ public class AboutUsServlet extends AbstractUIServlet {
     request.setAttribute("login", LoadBalancedStoreOperations.isLoggedIn(getSessionBlob(request)));
 
     request.getRequestDispatcher("WEB-INF/pages/about.jsp").forward(request, response);
-    orderSpan.finish();
   }
 
 }
