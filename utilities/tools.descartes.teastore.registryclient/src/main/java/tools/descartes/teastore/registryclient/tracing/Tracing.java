@@ -1,8 +1,10 @@
 package tools.descartes.teastore.registryclient.tracing;
 
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,7 +61,33 @@ public final class Tracing {
     String file = "tracer_config.properties";
     InputStream fs = Tracing.class.getClassLoader().getResourceAsStream(file);
     Properties config = new Properties();
-    config.load(fs);
+
+    /*if(System.getenv("TRACER_NAME_") != null) {
+      config.setProperty("tracer",System.getenv("TRACER_NAME"));
+
+      if(System.getenv("TRACER_NAME_").equals("jaeger") && System.getenv("JAEGER_HOST") != null && System.getenv("JAEGER_PORT") != null) {
+        config.setProperty("jaeger.reporter_host", System.getenv("JAEGER_HOST"));
+        config.setProperty("jaeger.reporter_port",System.getenv("JAEGER_PORT"));
+
+      } else if(System.getenv("TRACER_NAME_").equals("zipkin") && System.getenv("ZIPKIN_HOST") != null && System.getenv("ZIPKIN_PORT") != null) {
+        config.setProperty("zipkin.reporter_host", System.getenv("ZIPKIN_HOST"));
+        config.setProperty("zipkin.reporter_port", System.getenv("ZIPKIN_PORT"));
+      }
+    } else {
+      config.load(fs);
+    }*/
+
+    if(System.getenv("TRACER_CONFIG_PROPERTIES") != null) {
+
+      String configJson = System.getenv("TRACER_CONFIG_PROPERTIES");
+      InputStream inputStream = new ByteArrayInputStream(configJson.getBytes(StandardCharsets.UTF_8));
+      config.load(inputStream);
+      System.out.println("CONFIG-------------------------");
+      System.out.println(configJson);
+    } else {
+      config.load(fs);
+      System.out.println("REGULAR---------------------------------");
+    }
     return config;
   }
 
