@@ -62,7 +62,9 @@ public class InitialDataGenerationDaemon implements ServletContextListener {
    *          The servlet context event at initialization.
    */
   public void contextInitialized(ServletContextEvent event) {
-    GlobalTracer.register(Tracing.init(Service.PERSISTENCE.getServiceName()));
+    if(Tracing.init(Service.WEBUI.getServiceName()) != null) {
+      GlobalTracer.register(Tracing.init(Service.PERSISTENCE.getServiceName()));
+    }
     waitForDatabase();
     if (DataGenerator.GENERATOR.isDatabaseEmpty()) {
       LOG.info("Database is empty. Generating new database content");

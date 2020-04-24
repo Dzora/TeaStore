@@ -45,7 +45,6 @@ public class TrackingFilter implements Filter {
    * @throws ServletException servletException
    */
   public void init(FilterConfig filterConfig) throws ServletException {
-
   }
 
   /**
@@ -66,6 +65,7 @@ public class TrackingFilter implements Filter {
       }
       if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
         String url = ((HttpServletRequest) request).getRequestURL().toString();
+
         if (url.contains("webui")) {
           chain.doFilter(request, response);
           return;

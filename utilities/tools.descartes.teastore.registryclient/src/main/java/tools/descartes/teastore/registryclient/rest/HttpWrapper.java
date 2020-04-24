@@ -3,6 +3,7 @@ package tools.descartes.teastore.registryclient.rest;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.MediaType;
 
+import io.opentracing.util.GlobalTracer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import kieker.monitoring.core.controller.IMonitoringController;
@@ -41,7 +42,9 @@ public final class HttpWrapper {
    */
   public static Builder wrap(WebTarget target) {
     Builder builder = target.request(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON);
-    Tracing.inject(builder);
+    if(GlobalTracer.isRegistered()) {
+      Tracing.inject(builder,target.toString());
+    }
     if (CTRLINST.isMonitoringEnabled()) {
       final String sessionId = SESSION_REGISTRY.recallThreadLocalSessionId();
       final int eoi; // this is executionOrderIndex-th execution in this trace
@@ -66,6 +69,7 @@ public final class HttpWrapper {
           // CTRLINST.terminateMonitoring();
         }
       }
+
       // Get request header
       return builder.header(HEADER_FIELD,
           Long.toString(traceId) + "," + sessionId + "," + Integer.toString(eoi) + "," + Integer.toString(nextESS));

@@ -56,7 +56,9 @@ public class ImageProviderStartup implements ServletContextListener {
    *          The servlet context event at initialization.
    */
   public void contextInitialized(ServletContextEvent event) {
-    GlobalTracer.register(Tracing.init(Service.IMAGE.getServiceName()));
+      if(Tracing.init(Service.WEBUI.getServiceName()) != null) {
+          GlobalTracer.register(Tracing.init(Service.IMAGE.getServiceName()));
+      }
     ServiceLoadBalancer.preInitializeServiceLoadBalancers(Service.PERSISTENCE);
     RegistryClient.getClient().runAfterServiceIsAvailable(Service.PERSISTENCE,
         new StartupCallback() {

@@ -67,7 +67,9 @@ public class RecommenderStartup implements ServletContextListener {
 	 *            The servlet context event at initialization.
 	 */
 	public void contextInitialized(ServletContextEvent event) {
-		GlobalTracer.register(Tracing.init(Service.RECOMMENDER.getServiceName()));
+		if(Tracing.init(Service.WEBUI.getServiceName()) != null) {
+			GlobalTracer.register(Tracing.init(Service.RECOMMENDER.getServiceName()));
+		}
 		RESTClient.setGlobalReadTimeout(REST_READ_TIMOUT);
 		ServiceLoadBalancer.preInitializeServiceLoadBalancers(Service.PERSISTENCE);
 		RegistryClient.getClient().runAfterServiceIsAvailable(Service.PERSISTENCE, () -> {

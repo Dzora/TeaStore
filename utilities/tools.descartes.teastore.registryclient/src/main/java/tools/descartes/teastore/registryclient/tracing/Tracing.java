@@ -62,31 +62,13 @@ public final class Tracing {
     InputStream fs = Tracing.class.getClassLoader().getResourceAsStream(file);
     Properties config = new Properties();
 
-    /*if(System.getenv("TRACER_NAME_") != null) {
-      config.setProperty("tracer",System.getenv("TRACER_NAME"));
-
-      if(System.getenv("TRACER_NAME_").equals("jaeger") && System.getenv("JAEGER_HOST") != null && System.getenv("JAEGER_PORT") != null) {
-        config.setProperty("jaeger.reporter_host", System.getenv("JAEGER_HOST"));
-        config.setProperty("jaeger.reporter_port",System.getenv("JAEGER_PORT"));
-
-      } else if(System.getenv("TRACER_NAME_").equals("zipkin") && System.getenv("ZIPKIN_HOST") != null && System.getenv("ZIPKIN_PORT") != null) {
-        config.setProperty("zipkin.reporter_host", System.getenv("ZIPKIN_HOST"));
-        config.setProperty("zipkin.reporter_port", System.getenv("ZIPKIN_PORT"));
-      }
-    } else {
-      config.load(fs);
-    }*/
-
     if(System.getenv("TRACER_CONFIG_PROPERTIES") != null) {
-
       String configJson = System.getenv("TRACER_CONFIG_PROPERTIES");
       InputStream inputStream = new ByteArrayInputStream(configJson.getBytes(StandardCharsets.UTF_8));
       config.load(inputStream);
-      System.out.println("CONFIG-------------------------");
       System.out.println(configJson);
     } else {
       config.load(fs);
-      System.out.println("REGULAR---------------------------------");
     }
     return config;
   }
@@ -150,7 +132,7 @@ public final class Tracing {
    * @return Tracer intended to be used as GlobalTracer
    */
 
-  public static io.opentracing.Tracer init2(String service) {
+  public static io.opentracing.Tracer initOld(String service) {
     return new JaegerTracer.Builder(service).withSampler(new ConstSampler(true)).withZipkinSharedRpcSpan()
         .registerInjector(Format.Builtin.HTTP_HEADERS, new B3TextMapCodec.Builder().build())
         .registerExtractor(Format.Builtin.HTTP_HEADERS, new B3TextMapCodec.Builder().build()).build();
@@ -162,7 +144,7 @@ public final class Tracing {
    *
    * @param requestBuilder The requestBuilder object that gets injected
    */
-  public static void inject(Invocation.Builder requestBuilder) {
+  public static void inject(Invocation.Builder requestBuilder,String name) {
     Span activeSpan = GlobalTracer.get().activeSpan();
     if (activeSpan != null) {
       GlobalTracer.get().inject(activeSpan.context(), Format.Builtin.HTTP_HEADERS,
@@ -180,16 +162,21 @@ public final class Tracing {
    *         with try-with-resource construct
    */
   public static Scope extractCurrentSpan(HttpServletRequest request) {
-    Map<String, String> headers = new HashMap<>();
-    String path = request.getRequestURL().toString();
-    String name = path.substring(path.lastIndexOf('/') +1 );
+    if(GlobalTracer.isRegistered()) {
+      Map<String, String> headers = new HashMap<>();
+      String path = request.getRequestURL().toString();
+    /*String name = path.substring(path.lastIndexOf('/') +1 );
     if(name.contains("?")) {
       name = name.substring(0,name.indexOf('?'));
+    }*/
+      for (String headerName : Collections.list(request.getHeaderNames())) {
+        headers.put(headerName, request.getHeader(headerName));
+        System.out.println(headerName);
+      }
+      return buildSpanFromHeaders(headers, path);
+    } else {
+      return null;
     }
-    for (String headerName : Collections.list(request.getHeaderNames())) {
-      headers.put(headerName, request.getHeader(headerName));
-    }
-    return buildSpanFromHeaders(headers,name);
   }
 
   /**
@@ -233,6 +220,7 @@ public final class Tracing {
       e.printStackTrace();
     }
     return spanBuilder.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT).startActive(true);
+
   }
 
   /**
